@@ -16,7 +16,7 @@ from src.job_aggregator import JobAggregator
 from src.ai_matcher import JobMatcher
 from src.email_service import EmailService
 from src.company_research import CompanyResearcher
-from src.location_filter import matches_location_preference
+from src.location_filter import matches_location_preference, get_location_score
 
 from dotenv import load_dotenv
 import yaml
@@ -103,14 +103,27 @@ class JobSearchAssistant:
         print(f"\nStep 2: Scoring {len(jobs)} jobs with AI matcher...")
         scored_jobs = self.ai_matcher.score_jobs_batch(jobs)
 
-        # Step 3: Filter by minimum score
+        # Step 3: Add location scores
+        for job in scored_jobs:
+            job['location_score'] = get_location_score(job.get('location', ''))
+
+        # Step 4: Filter by minimum score
         min_score = self.user_profile.min_match_score
         filtered_jobs = [j for j in scored_jobs if j.get('match_score', 0) >= min_score]
         print(f"\n✓ {len(filtered_jobs)} jobs meet minimum score threshold ({min_score}%)")
 
+        # Count Midtown jobs
+        midtown_jobs = [j for j in filtered_jobs if j.get('location_score', 0) == 100]
+        if midtown_jobs:
+            print(f"  ⭐ {len(midtown_jobs)} Midtown Manhattan jobs (top priority!)")
+
         if not filtered_jobs:
             print("No jobs meet the minimum match score.")
             return
+
+        # Sort by location preference first, then match score
+        # This puts Midtown jobs at the top
+        filtered_jobs.sort(key=lambda x: (x.get('location_score', 0), x.get('match_score', 0)), reverse=True)
 
         # Step 4: Save jobs to database
         print("\nStep 3: Saving jobs to database...")
