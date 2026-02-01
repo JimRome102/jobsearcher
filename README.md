@@ -2,6 +2,29 @@
 
 An automated, **legal and ToS-compliant** job search assistant that finds, scores, and tracks job opportunities tailored to your background.
 
+## Quick Start
+
+```bash
+# 1. Run setup
+./easy_setup.sh
+
+# 2. Configure Gmail OAuth
+python setup_gmail_oauth.py
+
+# 3. Run your first search
+python src/main.py search
+
+# 4. Check your email for job matches!
+```
+
+**See [START_HERE.md](START_HERE.md) for detailed setup instructions.**
+
+## Current Filters
+
+- **Location**: Manhattan, Bronx, or Remote only
+- **Salary**: $175k+ (AI-inferred from job level)
+- **Priority**: Midtown Manhattan jobs (near Grand Central) listed first
+
 ## Features
 
 - **Multi-Source Job Aggregation**: Fetches jobs from LinkedIn, Indeed, Greenhouse, Lever, and more
