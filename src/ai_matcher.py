@@ -76,6 +76,7 @@ USER PROFILE:
 - Name: {self.user_profile.get('name', 'Jim Rome')}
 - Current Role: {self.user_profile.get('current_role', 'Principal Product Manager')}
 - Years of Experience: {self.user_profile.get('years_experience', '15')} years
+- Minimum Salary Requirement: $175,000+
 - Skills: {', '.join(skills[:20])}
 - Previous Companies: {', '.join(companies)}
 - Key Strengths: AI/ML, Mobile Products, Fintech, Real Estate Tech, Consumer Products
@@ -85,13 +86,16 @@ TARGET JOB:
 - Company: {job.get('company', 'Unknown')}
 - Location: {job.get('location', 'Unknown')}
 - Description: {job.get('description', '')[:1500]}
+- Salary Range: {job.get('salary_min', 'Not specified')}-{job.get('salary_max', 'Not specified')}
 
 EVALUATION CRITERIA:
 1. Role Seniority Match (25 points): Is this Principal/Director/VP level?
 2. Skills Alignment (25 points): Match with AI, mobile, product management expertise
 3. Industry Fit (20 points): Fintech, real estate, consumer tech, marketplace
 4. Company Quality (15 points): Growth stage, reputation, impact potential
-5. Location/Remote (15 points): Preference for remote/hybrid or NYC
+5. Salary & Location (15 points): $175k+ salary requirement; Manhattan/Bronx/Remote preferred
+
+IMPORTANT: If salary is listed and is below $175,000, score should be significantly lower (max 60).
 
 Provide:
 1. A score from 0-100
