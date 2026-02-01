@@ -1,0 +1,110 @@
+job_sources:
+  - name: linkedin
+    enabled: true
+    api_endpoint: https://api.linkedin.com/v2/jobs
+    rate_limit: 100  # requests per hour
+
+  - name: indeed
+    enabled: true
+    api_endpoint: https://api.indeed.com/ads/apisearch
+    rate_limit: 200
+
+  - name: github
+    enabled: true
+    api_endpoint: https://jobs.github.com/positions.json
+    rate_limit: 60
+
+  - name: ycombinator
+    enabled: true
+    api_endpoint: https://hacker-news.firebaseio.com/v0/jobstories.json
+    rate_limit: 10
+
+user_profile:
+  name: Jim Rome
+  email: romejim@gmail.com
+  phone: 914-643-4853
+  location: New York, NY
+
+  current_role: Principal Product Manager
+  years_experience: 15
+
+  skills:
+    - Product Management
+    - AI/ML & LLMs
+    - Mobile App Development (iOS/Android)
+    - Data Analysis & Experimentation
+    - Subscription & Monetization
+    - Search & Discovery
+    - Fintech/Financial Products
+    - Real Estate Tech
+    - Cross-functional Leadership
+
+  preferences:
+    job_types:
+      - Full-time
+      - Contract
+    work_arrangements:
+      - Remote
+      - Hybrid
+      - On-site
+    seniority_levels:
+      - Principal
+      - Director
+      - VP
+      - Senior
+
+matching_criteria:
+  required_keywords:
+    - product manager
+    - product management
+    - principal
+    - director
+    - senior
+
+  preferred_keywords:
+    - AI
+    - machine learning
+    - mobile
+    - iOS
+    - Android
+    - fintech
+    - real estate
+    - subscription
+    - B2C
+    - consumer
+
+  bonus_keywords:
+    - generative AI
+    - LLM
+    - search
+    - discovery
+    - marketplace
+
+  excluded_keywords:
+    - junior
+    - associate
+    - entry level
+
+company_research:
+  data_sources:
+    - crunchbase
+    - linkedin_company
+    - glassdoor
+    - built_in
+
+  key_metrics:
+    - funding_stage
+    - employee_count
+    - industry
+    - tech_stack
+    - culture_ratings
+
+email_digest:
+  template: modern
+  max_jobs_per_digest: 10
+  include_sections:
+    - top_matches
+    - urgent_deadlines
+    - new_opportunities
+    - recommended_contacts
+    - application_status
