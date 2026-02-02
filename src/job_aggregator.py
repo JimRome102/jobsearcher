@@ -155,13 +155,63 @@ class JobAggregator:
 
         # Expanded list of companies using Greenhouse
         # Greenhouse is one of the most popular ATS systems
+        # This list includes tech companies, startups, and established businesses
         greenhouse_companies = [
-            'stripe', 'airbnb', 'robinhood', 'coinbase', 'plaid',
-            'chime', 'affirm', 'square', 'datadog', 'notion',
-            'gitlab', 'figma', 'amplitude', 'webflow', 'airtable',
-            'gusto', 'rippling', 'brex', 'ramp', 'mercury',
-            'dropbox', 'pinterest', 'snap', 'reddit', 'discord',
-            'databricks', 'anthropic', 'openai', 'scale', 'nuro',
+            # Fintech
+            'stripe', 'coinbase', 'plaid', 'chime', 'affirm', 'square', 'brex', 'ramp', 'mercury',
+            'robinhood', 'carta', 'checkr', 'blend', 'marqeta', 'novi', 'checkout', 'adyen',
+
+            # Tech Giants & Unicorns
+            'airbnb', 'dropbox', 'pinterest', 'snap', 'reddit', 'discord', 'notion', 'databricks',
+
+            # AI/ML Companies
+            'anthropic', 'openai', 'scale', 'huggingface', 'cohere', 'jasper',
+
+            # Developer Tools
+            'gitlab', 'github', 'vercel', 'netlify', 'hashicorp', 'datadog', 'newrelic',
+            'sentry', 'postman', 'docker', 'circleci', 'buildkite',
+
+            # Design/Product
+            'figma', 'canva', 'miro', 'invision', 'abstract', 'framer',
+
+            # Productivity/Collaboration
+            'airtable', 'webflow', 'amplitude', 'mixpanel', 'segment', 'heap', 'pendo',
+            'monday', 'notion', 'coda', 'clickup',
+
+            # HR/People
+            'gusto', 'rippling', 'lattice', 'cultura', 'greenhouse', 'lever', 'workday',
+            'zenefits', 'namely', 'justworks', 'trinet',
+
+            # Healthcare/Biotech
+            'oscar', 'devoted', 'crossover', 'cityblock', 'commure', 'benchling',
+            'ginkgobioworks', 'recursion', 'insitro',
+
+            # E-commerce/Retail
+            'faire', 'whatnot', 'poshmark', 'depop', 'stockx', 'goat', 'rebag',
+
+            # Autonomous/Hardware
+            'nuro', 'cruise', 'zoox', 'aurora', 'embark', 'anduril', 'relativity',
+
+            # Real Estate/PropTech
+            'opendoor', 'zillow', 'redfin', 'compass', 'divvy', 'arrived',
+
+            # Gaming/Entertainment
+            'roblox', 'epic', 'riot', 'discord', 'twitch',
+
+            # Crypto/Web3
+            'coinbase', 'opensea', 'alchemy', 'paradigm', 'dapper', 'chainalysis',
+
+            # Education
+            'coursera', 'udacity', 'udemy', 'outschool', 'masterclass', '2u',
+
+            # Food/Delivery
+            'instacart', 'doordash', 'gopuff', 'getir', 'gorillas',
+
+            # Travel/Mobility
+            'lyft', 'lime', 'bird', 'hopper', 'outdoorsy',
+
+            # Security/Infrastructure
+            'cloudflare', 'akamai', 'fastly', 'crowdstrike', 'wiz', 'lacework',
         ]
 
         for company in greenhouse_companies:
@@ -190,10 +240,58 @@ class JobAggregator:
         jobs = []
 
         # Expanded list of companies using Lever
+        # Lever is popular with mid-size to large tech companies
         lever_companies = [
-            'netflix', 'lyft', 'shopify', 'elastic', 'pagerduty',
-            'reddit', 'segment', 'doordash', 'instacart', 'grubhub',
-            'asana', 'atlassian', 'eventbrite', 'coursera', 'udacity',
+            # Tech Giants
+            'netflix', 'shopify', 'atlassian', 'elastic', 'mongodb', 'confluent',
+
+            # Mobility/Transportation
+            'lyft', 'bird', 'lime', 'getaround', 'turo', 'waymo',
+
+            # Food/Delivery
+            'doordash', 'instacart', 'grubhub', 'gopuff', 'postmates', 'caviar',
+
+            # Social/Communication
+            'reddit', 'nextdoor', 'discord', 'bumble', 'hinge', 'match',
+
+            # Developer Tools/Data
+            'segment', 'datadog', 'elastic', 'pagerduty', 'launchdarkly', 'split',
+            'amplitude', 'fullstory', 'logrocket',
+
+            # Productivity/Collaboration
+            'asana', 'notion', 'airtable', 'coda', 'miro', 'figma', 'linear',
+            'clickup', 'height', 'superhuman',
+
+            # Education/Learning
+            'coursera', 'udacity', 'udemy', 'outschool', 'masterclass', 'skillshare',
+            'pluralsight', 'teachable',
+
+            # Events/Community
+            'eventbrite', 'hopin', 'run-the-world', 'luma', 'partiful',
+
+            # Finance/Banking
+            'nubank', 'n26', 'revolut', 'monzo', 'current', 'dave',
+
+            # Healthcare/Wellness
+            'ro', 'hims', 'nurx', 'talkspace', 'betterhelp', 'headspace', 'calm',
+
+            # E-commerce/Marketplaces
+            'poshmark', 'mercari', 'offerup', 'reverb', 'chairish',
+
+            # Real Estate
+            'redfin', 'opendoor', 'homelight', 'knock', 'flyhomes',
+
+            # Gaming
+            'niantic', 'scopely', 'supercell', 'voodoo', 'playrix',
+
+            # Media/Content
+            'spotify', 'soundcloud', 'patreon', 'substack', 'medium',
+
+            # Infrastructure/Cloud
+            'digitalocean', 'linode', 'vultr', 'packet', 'equinix',
+
+            # Security
+            'snyk', 'teleport', 'detectify', 'bugcrowd', 'hackerone',
         ]
 
         for company in lever_companies:
