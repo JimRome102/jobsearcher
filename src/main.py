@@ -15,8 +15,11 @@ from src.resume_parser import ResumeParser
 from src.job_aggregator import JobAggregator
 from src.ai_matcher import JobMatcher
 from src.email_service import EmailService
+from src.sheets_service import SheetsService
 from src.company_research import CompanyResearcher
+from src.contact_finder import ContactFinder
 from src.location_filter import matches_location_preference, get_location_score
+from src.role_filter import is_product_manager_role, meets_seniority_requirement
 
 from dotenv import load_dotenv
 import yaml
@@ -43,7 +46,16 @@ class JobSearchAssistant:
         self.resume_parser = ResumeParser(os.getenv('RESUME_DIRECTORY'))
         self.job_aggregator = JobAggregator(self.config)
         self.company_researcher = CompanyResearcher()
+        self.contact_finder = ContactFinder()
         self.email_service = EmailService(os.getenv('USER_EMAIL'))
+
+        # Initialize Google Sheets (optional)
+        self.sheets_service = None
+        if os.getenv('GOOGLE_SHEETS_ID'):
+            try:
+                self.sheets_service = SheetsService()
+            except Exception as e:
+                print(f"⚠ Could not initialize Google Sheets: {e}")
 
         # Parse resumes on first run
         self.resume_data = self.resume_parser.parse_all_resumes()
@@ -129,6 +141,11 @@ class JobSearchAssistant:
         print("\nStep 3: Saving jobs to database...")
         self._save_jobs_to_db(filtered_jobs)
 
+        # Step 4.5: Sync to Google Sheets
+        if self.sheets_service:
+            print("\nSyncing jobs to Google Sheets...")
+            self.sheets_service.add_jobs_to_sheet(filtered_jobs)
+
         # Step 5: Research companies for top jobs
         print("\nStep 4: Researching companies...")
         top_jobs = sorted(filtered_jobs, key=lambda x: x.get('match_score', 0), reverse=True)[:10]
@@ -137,6 +154,10 @@ class JobSearchAssistant:
         # Step 6: Identify potential contacts
         print("\nStep 5: Identifying potential contacts...")
         self._save_contacts_to_db(company_research)
+
+        # Step 6.5: Find additional contacts with email guessing
+        print("\nStep 5.5: Finding contact details and guessing emails...")
+        self._find_and_save_detailed_contacts(top_jobs, company_research)
 
         # Step 7: Send email digest
         print("\nStep 6: Sending email digest...")
@@ -227,6 +248,35 @@ class JobSearchAssistant:
 
         self.session.commit()
         print(f"✓ Saved {contact_count} potential contacts")
+
+    def _find_and_save_detailed_contacts(self, jobs: List[Dict], company_research: Dict[str, Dict]):
+        """Find detailed contacts with email guessing and LinkedIn URLs."""
+        all_contacts = []
+
+        for job in jobs:
+            company_name = job.get('company', '')
+            company_info = company_research.get(company_name, {})
+
+            # Find contacts using the contact finder
+            contacts = self.contact_finder.find_contacts_for_job(job, company_info)
+
+            for contact in contacts:
+                contact_entry = {
+                    'job': f"{job.get('title', '')} at {company_name}",
+                    'title': contact.get('title', ''),
+                    'reasoning': contact.get('reasoning', ''),
+                    'confidence': contact.get('confidence', ''),
+                    'primary_email': contact.get('primary_email', ''),
+                    'all_email_guesses': ', '.join(contact.get('email_guesses', [])[:3]),
+                    'linkedin_search': contact.get('linkedin_search_url', ''),
+                }
+                all_contacts.append(contact_entry)
+
+        # Sync to Google Sheets if available
+        if self.sheets_service and all_contacts:
+            self.sheets_service.add_contacts_to_sheet(all_contacts)
+
+        print(f"✓ Found {len(all_contacts)} detailed contacts with email guesses")
 
     def _send_digest(self, jobs: List[Dict]):
         """Send email digest."""
