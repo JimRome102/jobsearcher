@@ -17,6 +17,7 @@ from src.ai_matcher import JobMatcher
 from src.email_service import EmailService
 from src.company_research import CompanyResearcher
 from src.location_filter import matches_location_preference, get_location_score
+from src.role_filter import is_product_manager_role, meets_seniority_requirement
 
 from dotenv import load_dotenv
 import yaml
@@ -164,16 +165,24 @@ class JobSearchAssistant:
             if job.get('external_id') not in existing_external_ids
         ]
 
-        # Filter by location (NYC, Westchester, Remote only)
+        # Filter by location (Manhattan/Bronx/Remote only)
         location_filtered_jobs = [
             job for job in new_jobs
             if matches_location_preference(job.get('location', ''))
         ]
 
-        print(f"✓ Found {len(new_jobs)} new jobs (filtered {len(jobs) - len(new_jobs)} duplicates)")
-        print(f"✓ Location filtered: {len(location_filtered_jobs)} jobs match NYC/Westchester/Remote")
+        # Filter by role (Product Manager only, Senior+ level)
+        role_filtered_jobs = [
+            job for job in location_filtered_jobs
+            if is_product_manager_role(job.get('title', '')) and
+               meets_seniority_requirement(job.get('title', ''))
+        ]
 
-        return location_filtered_jobs
+        print(f"✓ Found {len(new_jobs)} new jobs (filtered {len(jobs) - len(new_jobs)} duplicates)")
+        print(f"✓ Location filtered: {len(location_filtered_jobs)} jobs match Manhattan/Bronx/Remote")
+        print(f"✓ Role filtered: {len(role_filtered_jobs)} jobs are Product Manager roles (Senior+)")
+
+        return role_filtered_jobs
 
     def _save_jobs_to_db(self, jobs: List[Dict]):
         """Save jobs to database."""
