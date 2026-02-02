@@ -18,6 +18,7 @@ from src.email_service import EmailService
 from src.sheets_service import SheetsService
 from src.company_research import CompanyResearcher
 from src.contact_finder import ContactFinder
+from src.resume_customizer import ResumeCustomizer
 from src.location_filter import matches_location_preference, get_location_score
 from src.role_filter import is_product_manager_role, meets_seniority_requirement
 
@@ -159,6 +160,10 @@ class JobSearchAssistant:
         print("\nStep 5.5: Finding contact details and guessing emails...")
         self._find_and_save_detailed_contacts(top_jobs, company_research)
 
+        # Step 6.7: Generate customized resumes for all matched jobs
+        print("\nStep 5.7: Generating customized resumes for each job...")
+        self._generate_customized_resumes(filtered_jobs)
+
         # Step 7: Send email digest
         print("\nStep 6: Sending email digest...")
         self._send_digest(filtered_jobs)
@@ -285,6 +290,23 @@ class JobSearchAssistant:
             self.sheets_service.add_contacts_to_sheet(all_contacts)
 
         print(f"✓ Found {len(all_contacts)} detailed contacts with email guesses")
+
+    def _generate_customized_resumes(self, jobs: List[Dict]):
+        """Generate customized resumes for each job."""
+        if not jobs:
+            return
+
+        # Initialize resume customizer
+        customizer = ResumeCustomizer(
+            resume_data=self.resume_summary,
+            user_profile=self.config['user_profile']
+        )
+
+        # Generate customized resumes
+        resume_files = customizer.batch_customize_resumes(jobs)
+
+        print(f"✓ Generated {len(resume_files)} customized resumes")
+        print(f"📂 Saved in: customized_resumes/")
 
     def _send_digest(self, jobs: List[Dict]):
         """Send email digest."""
