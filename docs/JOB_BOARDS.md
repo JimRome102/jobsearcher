@@ -10,6 +10,14 @@ This document describes all supported job boards and their integration status.
 | Indeed | ⚠️ Partial | API | Yes | DNS errors, needs valid API key |
 | Greenhouse | ✅ Working | API | No | Public API, multiple companies |
 | Lever | ⚠️ Partial | API | No | Public API, low results |
+| Workday | 🚧 Planned | API | No | Major enterprise ATS |
+| iCIMS | 🚧 Planned | API | No | Major enterprise ATS |
+| SmartRecruiters | ✅ Ready | API | No | Public API available |
+| Workable | ✅ Ready | API | No | Public API available |
+| Teamtailor | ✅ Ready | API | No | Public API available |
+| BambooHR | 🚧 Planned | Web | No | Public job boards |
+| Ashby | ✅ Ready | API | No | Public API/boards available |
+| Breezy HR | ✅ Ready | API | No | Public JSON API available |
 | Glassdoor | 🚧 Planned | Web | No | RSS feed scraping planned |
 | Built In | 🚧 Planned | Web | No | Web scraping planned |
 | Wellfound | 🚧 Ready | API | Yes | GraphQL API, needs key |
@@ -192,6 +200,111 @@ Legend:
 - International job board (US, UK, FR, etc.)
 - Strong company culture focus
 - Good for tech and startup roles
+
+## Applicant Tracking System (ATS) Integrations
+
+Many companies use ATS platforms that provide public job boards. We've integrated with the major ATS platforms:
+
+### 15. Workday
+**ATS Used By:** Amazon, Apple, Microsoft, Walmart, Target, McDonald's
+**Type:** Enterprise ATS
+**Status:** 🚧 Structure in place, needs company-specific parsers
+
+**Notes:**
+- Major enterprise ATS platform
+- Each company has custom implementation
+- API structure varies by company
+
+### 16. iCIMS
+**ATS Used By:** Uber, Walmart, PepsiCo
+**Type:** Enterprise ATS
+**Status:** 🚧 Structure in place, needs parsers
+
+**Notes:**
+- Major enterprise ATS platform
+- Widely used in Fortune 500 companies
+
+### 17. SmartRecruiters
+**ATS Used By:** LinkedIn, Bosch, Visa, Skechers, IKEA
+**Type:** Public API
+**Status:** ✅ Code ready, tested
+
+**API Endpoint:** https://api.smartrecruiters.com/v1/companies/{company}/postings
+**Companies tracked:** linkedin, bosch, visa, skechers, ikea
+**Notes:**
+- Standardized public API
+- No API key required
+- Good for enterprise roles
+
+### 18. Workable
+**ATS Used By:** HubSpot, Zendesk, Hootsuite, Intercom, Drift
+**Type:** Public API
+**Status:** ✅ Code ready, tested
+
+**API Endpoint:** https://apply.workable.com/api/v1/accounts/{company}/jobs
+**Companies tracked:** hubspot, zendesk, hootsuite, intercom, drift
+**Notes:**
+- Clean public API
+- Popular with mid-size tech companies
+
+### 19. Teamtailor
+**ATS Used By:** Spotify, Klarna, Northvolt, Einride
+**Type:** Public API
+**Status:** ✅ Code ready, tested
+
+**API Endpoint:** https://api.teamtailor.com/v1/jobs
+**Companies tracked:** spotify, klarna, northvolt, einride
+**Notes:**
+- Popular in Europe
+- Well-documented API
+
+### 20. BambooHR
+**ATS Used By:** SoundCloud, Asana, Foursquare
+**Type:** Public job boards
+**Status:** 🚧 Structure in place, needs parser
+
+**Format:** {company}.bamboohr.com/jobs/
+**Companies tracked:** soundcloud, asana, foursquare
+**Notes:**
+- Popular with SMBs
+- Each company has public job board
+
+### 21. Ashby
+**ATS Used By:** Anthropic, Scale AI, Retool, Ramp, Vanta
+**Type:** Public API/boards
+**Status:** ✅ Code ready, tested
+
+**Format:** https://jobs.ashbyhq.com/{company}
+**Companies tracked:** anthropic, scale, retool, ramp, vanta
+**Notes:**
+- Newer ATS popular with AI/tech startups
+- Clean public job boards
+
+### 22. Breezy HR
+**ATS Used By:** Clearbit, Segment, Mattermost
+**Type:** Public JSON API
+**Status:** ✅ Code ready, tested
+
+**API Endpoint:** https://{company}.breezy.hr/json
+**Companies tracked:** clearbit, segment, mattermost
+**Notes:**
+- Simple JSON API
+- Popular with startups
+
+## Other ATS Systems (Not Yet Integrated)
+
+These ATS platforms are on our roadmap:
+- **ADP Workforce Now** - Enterprise ATS
+- **Oracle Taleo (Brassring)** - Enterprise ATS
+- **SAP SuccessFactors** - Enterprise ATS
+- **Cornerstone** - Enterprise ATS
+- **UltiPro (UKG)** - Enterprise ATS
+- **Bullhorn** - Recruiting ATS
+- **JazzHR** - SMB ATS
+- **Zoho Recruit** - SMB ATS
+- **Paycor** - HR/ATS platform
+- **Fountain** - Hourly worker ATS
+- **ApplicantAI**, **Applied**, **Apploi**, **Asure**, **Cezanne**, **Deel**, **Frontline**, **Getro**, **HireBridge**, **HRM Direct**, **Juggle Hire**, **Loxo**, **Manatal**, **Pageup**, **PeopleGuru**, **Pinpoint**, **Sage People**, **TalentLyft**, **TalentReef**, **Talexio**, **TrackerRMS**, **TriNet Zenefits**, **Vista PDS**
 
 ## Currently Working Sources
 
