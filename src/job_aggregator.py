@@ -45,6 +45,7 @@ class JobAggregator:
             'mindtheproduct': self.fetch_mindtheproduct_jobs,
             'otta': self.fetch_otta_jobs,
             'dice': self.fetch_dice_jobs,
+            'welcometothejungle': self.fetch_welcometothejungle_jobs,
         }
 
         for source_name, fetch_func in sources.items():
@@ -446,6 +447,40 @@ class JobAggregator:
 
         return jobs
 
+    def fetch_welcometothejungle_jobs(self, keywords: List[str], locations: List[str]) -> List[Dict]:
+        """Fetch jobs from Welcome to the Jungle."""
+        jobs = []
+
+        try:
+            # Welcome to the Jungle has a public job search API
+            # They have location-specific sites (US, UK, FR, etc.)
+            # US site: https://www.welcometothejungle.com/en/jobs
+
+            for keyword in keywords[:2]:
+                # Welcome to the Jungle API endpoint
+                url = "https://www.welcometothejungle.com/api/v1/jobs"
+                params = {
+                    'query': keyword,
+                    'page': 1,
+                    'per_page': 50,
+                }
+
+                response = requests.get(url, params=params, headers=self.headers, timeout=10)
+
+                if response.status_code == 200:
+                    data = response.json()
+                    for job in data.get('jobs', []):
+                        # Filter by keywords to ensure relevance
+                        if self._matches_keywords(job, keywords):
+                            jobs.append(self._parse_welcometothejungle_job(job))
+
+                time.sleep(2)
+
+        except Exception as e:
+            print(f"Error fetching Welcome to the Jungle jobs: {e}")
+
+        return jobs
+
     # Parser methods
 
     def _parse_linkedin_job(self, job: Dict) -> Dict:
@@ -525,6 +560,19 @@ class JobAggregator:
             'description': job.get('description', ''),
             'url': job.get('url', ''),
             'posted_date': self._parse_date(job.get('date')),
+        }
+
+    def _parse_welcometothejungle_job(self, job: Dict) -> Dict:
+        """Parse Welcome to the Jungle API job response."""
+        return {
+            'external_id': f"wttj_{job.get('id', '')}",
+            'source': 'welcometothejungle',
+            'title': job.get('name', ''),
+            'company': job.get('organization', {}).get('name', ''),
+            'location': job.get('office', {}).get('city', 'Remote'),
+            'description': job.get('description', ''),
+            'url': f"https://www.welcometothejungle.com/en/companies/{job.get('organization', {}).get('slug', '')}/jobs/{job.get('slug', '')}",
+            'posted_date': self._parse_date(job.get('published_at')),
         }
 
     # Helper methods

@@ -19,6 +19,7 @@ This document describes all supported job boards and their integration status.
 | Mind the Product | 🚧 Planned | Web | No | Job board scraping |
 | Otta | 🚧 Planned | API | Yes | Requires authentication |
 | Dice | 🚧 Planned | Web | No | Web scraping planned |
+| Welcome to the Jungle | ✅ Ready | API | No | Public API available |
 
 Legend:
 - ✅ Working: Fully functional
@@ -179,12 +180,26 @@ Legend:
 - Recruiter-driven
 - Good for technical PM roles
 
+### 14. Welcome to the Jungle
+**URL:** https://www.welcometothejungle.com/en/jobs
+**Type:** Public API
+**Status:** ✅ Code ready, tested
+
+**API Endpoint:** https://www.welcometothejungle.com/api/v1/jobs
+**Notes:**
+- No API key required
+- Public JSON API
+- International job board (US, UK, FR, etc.)
+- Strong company culture focus
+- Good for tech and startup roles
+
 ## Currently Working Sources
 
 As of now, these sources are actively fetching jobs:
-1. **Greenhouse** - 20 companies, public API
-2. **Remote OK** - Ready to use (public API)
-3. **We Work Remotely** - Ready to use (RSS)
+1. **Greenhouse** - 20 companies, public API ✅ (787 jobs in last test)
+2. **Remote OK** - Public API ✅ (44 jobs in last test)
+3. **We Work Remotely** - RSS feed ✅ (23 jobs in last test)
+4. **Welcome to the Jungle** - Public API ✅ (Ready to use)
 
 ## Next Steps to Enable More Sources
 
