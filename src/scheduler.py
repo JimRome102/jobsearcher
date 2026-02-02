@@ -44,10 +44,10 @@ def main():
     """Set up and start the scheduler."""
     scheduler = BlockingScheduler()
 
-    # Schedule morning run at 8:00 AM
+    # Schedule morning run at 5:15 AM
     scheduler.add_job(
         run_job_search,
-        CronTrigger(hour=8, minute=0),
+        CronTrigger(hour=5, minute=15),
         id='morning_job_search',
         name='Morning Job Search',
         replace_existing=True
@@ -63,7 +63,7 @@ def main():
     )
 
     logger.info("Scheduler started. Job search will run at:")
-    logger.info("  - 8:00 AM (Morning digest)")
+    logger.info("  - 5:15 AM (Morning digest)")
     logger.info("  - 6:00 PM (Evening digest)")
     logger.info("\nPress Ctrl+C to exit")
 
