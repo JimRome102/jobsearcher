@@ -57,6 +57,16 @@ config/gmail_credentials.json
 config/token.json
 config/gmail_token.json
 
+# Google Sheets credentials
+config/sheets_credentials.json
+config/sheets_token.json
+
+# Customized resumes (user data)
+customized_resumes/
+
+# Zip files
+*.zip
+
 # Jupyter
 .ipynb_checkpoints
 

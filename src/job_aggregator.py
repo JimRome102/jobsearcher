@@ -54,6 +54,9 @@ class JobAggregator:
             'otta': self.fetch_otta_jobs,
             'dice': self.fetch_dice_jobs,
             'welcometothejungle': self.fetch_welcometothejungle_jobs,
+            'productjobs': self.fetch_productjobs_jobs,
+            'trueup': self.fetch_trueup_jobs,
+            'pave': self.fetch_pave_jobs,
         }
 
         for source_name, fetch_func in sources.items():
@@ -560,15 +563,12 @@ class JobAggregator:
         return jobs
 
     def fetch_glassdoor_jobs(self, keywords: List[str], locations: List[str]) -> List[Dict]:
-        """Fetch jobs from Glassdoor RSS feeds."""
+        """Fetch jobs from Glassdoor."""
         jobs = []
 
-        # Glassdoor provides RSS feeds for job searches
-        # Example: https://www.glassdoor.com/Job/jobs.htm?sc.keyword=product+manager
-
+        # Glassdoor scraping - note this may be fragile due to site structure changes
         for keyword in keywords[:2]:  # Limit to avoid too many requests
             try:
-                # Glassdoor RSS feed format
                 search_term = keyword.replace(' ', '+')
                 url = f"https://www.glassdoor.com/Job/jobs.htm?sc.keyword={search_term}"
 
@@ -576,9 +576,41 @@ class JobAggregator:
 
                 if response.status_code == 200:
                     soup = BeautifulSoup(response.text, 'html.parser')
-                    # Parse job cards from the page
-                    # Note: Glassdoor structure may change, this is a basic implementation
-                    # In production, consider using their official API if available
+
+                    # Glassdoor uses various class names, try multiple selectors
+                    job_cards = soup.find_all(['li', 'div'], class_=lambda x: x and ('job' in str(x).lower() or 'listing' in str(x).lower()))
+
+                    for card in job_cards[:30]:
+                        try:
+                            title_elem = card.find(['a', 'h2'], class_=lambda x: x and 'job' in str(x).lower())
+                            title = title_elem.get_text(strip=True) if title_elem else ''
+
+                            if title:
+                                company_elem = card.find(['span', 'div'], class_=lambda x: x and 'employer' in str(x).lower())
+                                if not company_elem:
+                                    company_elem = card.find(['span', 'div'], class_=lambda x: x and 'company' in str(x).lower())
+                                company = company_elem.get_text(strip=True) if company_elem else 'Unknown'
+
+                                location_elem = card.find(['span', 'div'], class_=lambda x: x and 'location' in str(x).lower())
+                                location = location_elem.get_text(strip=True) if location_elem else ''
+
+                                url_elem = card.find('a', href=True)
+                                job_url = url_elem['href'] if url_elem else ''
+                                if job_url and not job_url.startswith('http'):
+                                    job_url = f"https://www.glassdoor.com{job_url}"
+
+                                jobs.append({
+                                    'external_id': f"glassdoor_{hash(job_url)}",
+                                    'source': 'glassdoor',
+                                    'title': title,
+                                    'company': company,
+                                    'location': location,
+                                    'description': '',
+                                    'url': job_url,
+                                    'posted_date': datetime.utcnow(),
+                                })
+                        except Exception:
+                            continue
 
                 time.sleep(2)  # Respectful rate limiting
 
@@ -591,17 +623,46 @@ class JobAggregator:
         """Fetch jobs from Built In job boards."""
         jobs = []
 
-        # Built In has location-specific sites
-        # https://builtin.com/jobs/product
-
+        # Built In has location-specific sites and a general product page
         try:
             url = "https://builtin.com/jobs/product"
             response = requests.get(url, headers=self.headers, timeout=10)
 
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
-                # Parse job listings from Built In
-                # Their site structure includes job cards with data attributes
+
+                # Built In uses structured job cards
+                job_cards = soup.find_all(['div', 'article'], class_=lambda x: x and 'job' in str(x).lower())
+
+                for card in job_cards[:50]:
+                    try:
+                        title_elem = card.find(['h2', 'h3', 'a'], class_=lambda x: x and ('title' in str(x).lower() or 'job' in str(x).lower()))
+                        title = title_elem.get_text(strip=True) if title_elem else ''
+
+                        if title and self._matches_keywords({'title': title}, keywords):
+                            company_elem = card.find(['span', 'div', 'a'], class_=lambda x: x and 'company' in str(x).lower())
+                            company = company_elem.get_text(strip=True) if company_elem else 'Unknown'
+
+                            location_elem = card.find(['span', 'div'], class_=lambda x: x and 'location' in str(x).lower())
+                            location = location_elem.get_text(strip=True) if location_elem else ''
+
+                            url_elem = card.find('a', href=True)
+                            job_url = url_elem['href'] if url_elem else ''
+                            if job_url and not job_url.startswith('http'):
+                                job_url = f"https://builtin.com{job_url}"
+
+                            jobs.append({
+                                'external_id': f"builtin_{hash(job_url)}",
+                                'source': 'builtin',
+                                'title': title,
+                                'company': company,
+                                'location': location,
+                                'description': '',
+                                'url': job_url,
+                                'posted_date': datetime.utcnow(),
+                            })
+                    except Exception:
+                        continue
 
             time.sleep(2)
 
@@ -669,14 +730,51 @@ class JobAggregator:
         jobs = []
 
         try:
-            # YC jobs page
+            # YC jobs page for product managers
             url = "https://www.ycombinator.com/jobs/role/product-manager"
             response = requests.get(url, headers=self.headers, timeout=10)
 
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
-                # Parse YC job listings
-                # YC has a structured job board with company data
+
+                # YC uses structured job listings
+                job_cards = soup.find_all(['div', 'a'], class_=lambda x: x and 'job' in str(x).lower())
+                if not job_cards:
+                    # Try alternative selector
+                    job_cards = soup.find_all(['div', 'article'])
+
+                for card in job_cards[:50]:
+                    try:
+                        # Look for title
+                        title_elem = card.find(['h3', 'h2', 'span'], class_=lambda x: x and ('title' in str(x).lower() or 'position' in str(x).lower()))
+                        if not title_elem:
+                            title_elem = card.find(['h3', 'h2'])
+                        title = title_elem.get_text(strip=True) if title_elem else ''
+
+                        if title and self._matches_keywords({'title': title}, keywords):
+                            company_elem = card.find(['span', 'div', 'a'], class_=lambda x: x and 'company' in str(x).lower())
+                            company = company_elem.get_text(strip=True) if company_elem else 'YC Company'
+
+                            location_elem = card.find(['span', 'div'], class_=lambda x: x and 'location' in str(x).lower())
+                            location = location_elem.get_text(strip=True) if location_elem else ''
+
+                            url_elem = card.find('a', href=True)
+                            job_url = url_elem['href'] if url_elem else ''
+                            if job_url and not job_url.startswith('http'):
+                                job_url = f"https://www.ycombinator.com{job_url}"
+
+                            jobs.append({
+                                'external_id': f"yc_{hash(job_url)}",
+                                'source': 'yc_jobs',
+                                'title': title,
+                                'company': company,
+                                'location': location,
+                                'description': '',
+                                'url': job_url,
+                                'posted_date': datetime.utcnow(),
+                            })
+                    except Exception:
+                        continue
 
             time.sleep(2)
 
@@ -748,8 +846,42 @@ class JobAggregator:
 
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
-                # Parse Mind the Product job listings
-                # This is a WordPress-based job board
+
+                # Mind the Product is a WordPress-based job board
+                # Look for job listings in common WordPress job board structures
+                job_cards = soup.find_all(['div', 'article', 'li'], class_=lambda x: x and ('job' in str(x).lower() or 'listing' in str(x).lower()))
+
+                for card in job_cards[:50]:
+                    try:
+                        title_elem = card.find(['h2', 'h3', 'h4', 'a'], class_=lambda x: not x or 'title' in str(x).lower() or 'job' in str(x).lower())
+                        if not title_elem:
+                            title_elem = card.find(['h2', 'h3', 'h4'])
+                        title = title_elem.get_text(strip=True) if title_elem else ''
+
+                        if title and self._matches_keywords({'title': title}, keywords):
+                            company_elem = card.find(['span', 'div', 'p'], class_=lambda x: x and 'company' in str(x).lower())
+                            company = company_elem.get_text(strip=True) if company_elem else 'Unknown'
+
+                            location_elem = card.find(['span', 'div', 'p'], class_=lambda x: x and 'location' in str(x).lower())
+                            location = location_elem.get_text(strip=True) if location_elem else ''
+
+                            url_elem = card.find('a', href=True)
+                            job_url = url_elem['href'] if url_elem else ''
+                            if job_url and not job_url.startswith('http'):
+                                job_url = f"https://www.mindtheproduct.com{job_url}"
+
+                            jobs.append({
+                                'external_id': f"mindtheproduct_{hash(job_url)}",
+                                'source': 'mindtheproduct',
+                                'title': title,
+                                'company': company,
+                                'location': location,
+                                'description': '',
+                                'url': job_url,
+                                'posted_date': datetime.utcnow(),
+                            })
+                    except Exception:
+                        continue
 
             time.sleep(2)
 
@@ -763,16 +895,50 @@ class JobAggregator:
         jobs = []
 
         try:
-            # Otta requires authentication for their API
-            # For now, skip unless API key is provided
-            url = "https://otta.com/api/jobs"
-            response = requests.get(url, headers=self.headers, timeout=10)
+            # Otta has a public job search page we can scrape
+            for keyword in keywords[:2]:
+                url = f"https://otta.com/jobs?q={keyword.replace(' ', '+')}"
+                response = requests.get(url, headers=self.headers, timeout=10)
 
-            if response.status_code == 200:
-                data = response.json()
-                # Parse Otta jobs
+                if response.status_code == 200:
+                    soup = BeautifulSoup(response.text, 'html.parser')
 
-            time.sleep(2)
+                    # Otta uses React-based UI, try to find job cards
+                    job_cards = soup.find_all(['div', 'article'], attrs={'data-test': lambda x: x and 'job' in str(x).lower()})
+                    if not job_cards:
+                        job_cards = soup.find_all(['div', 'a'], class_=lambda x: x and 'job' in str(x).lower())
+
+                    for card in job_cards[:50]:
+                        try:
+                            title_elem = card.find(['h2', 'h3', 'span'])
+                            title = title_elem.get_text(strip=True) if title_elem else ''
+
+                            if title and self._matches_keywords({'title': title}, keywords):
+                                company_elem = card.find(['span', 'div'], class_=lambda x: x and 'company' in str(x).lower())
+                                company = company_elem.get_text(strip=True) if company_elem else 'Unknown'
+
+                                location_elem = card.find(['span', 'div'], class_=lambda x: x and 'location' in str(x).lower())
+                                location = location_elem.get_text(strip=True) if location_elem else ''
+
+                                url_elem = card.find('a', href=True)
+                                job_url = url_elem['href'] if url_elem else ''
+                                if job_url and not job_url.startswith('http'):
+                                    job_url = f"https://otta.com{job_url}"
+
+                                jobs.append({
+                                    'external_id': f"otta_{hash(job_url)}",
+                                    'source': 'otta',
+                                    'title': title,
+                                    'company': company,
+                                    'location': location,
+                                    'description': '',
+                                    'url': job_url,
+                                    'posted_date': datetime.utcnow(),
+                                })
+                        except Exception:
+                            continue
+
+                time.sleep(2)
 
         except Exception as e:
             print(f"Error fetching Otta jobs: {e}")
@@ -831,6 +997,171 @@ class JobAggregator:
 
         except Exception as e:
             print(f"Error fetching Welcome to the Jungle jobs: {e}")
+
+        return jobs
+
+    def fetch_productjobs_jobs(self, keywords: List[str], locations: List[str]) -> List[Dict]:
+        """Fetch jobs from ProductJobs.com."""
+        jobs = []
+
+        try:
+            # ProductJobs is a product management job board
+            # Try both web scraping and RSS feed approaches
+            url = "https://productjobs.com/jobs"
+            response = requests.get(url, headers=self.headers, timeout=10)
+
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+
+                # Parse job listings - ProductJobs typically uses structured HTML
+                job_cards = soup.find_all(['div', 'article'], class_=lambda x: x and ('job' in str(x).lower() or 'position' in str(x).lower()))
+
+                for card in job_cards[:50]:  # Limit to first 50
+                    try:
+                        # Extract job details from card structure
+                        title_elem = card.find(['h2', 'h3', 'a'], class_=lambda x: x and 'title' in str(x).lower())
+                        title = title_elem.get_text(strip=True) if title_elem else ''
+
+                        # Check if matches keywords
+                        if title and any(keyword.lower() in title.lower() for keyword in keywords):
+                            company_elem = card.find(['span', 'div', 'p'], class_=lambda x: x and 'company' in str(x).lower())
+                            company = company_elem.get_text(strip=True) if company_elem else 'Unknown'
+
+                            location_elem = card.find(['span', 'div', 'p'], class_=lambda x: x and 'location' in str(x).lower())
+                            location = location_elem.get_text(strip=True) if location_elem else 'Remote'
+
+                            url_elem = card.find('a', href=True)
+                            job_url = url_elem['href'] if url_elem else ''
+                            if job_url and not job_url.startswith('http'):
+                                job_url = f"https://productjobs.com{job_url}"
+
+                            jobs.append({
+                                'external_id': f"productjobs_{hash(job_url)}",
+                                'source': 'productjobs',
+                                'title': title,
+                                'company': company,
+                                'location': location,
+                                'description': '',
+                                'url': job_url,
+                                'posted_date': datetime.utcnow(),
+                            })
+                    except Exception:
+                        continue
+
+            time.sleep(2)
+
+        except Exception as e:
+            print(f"Error fetching ProductJobs jobs: {e}")
+
+        return jobs
+
+    def fetch_trueup_jobs(self, keywords: List[str], locations: List[str]) -> List[Dict]:
+        """Fetch jobs from TrueUp.io."""
+        jobs = []
+
+        try:
+            # TrueUp is a tech startup job board with compensation data
+            # They have a public job search page
+            for keyword in keywords[:2]:
+                url = f"https://www.trueup.io/jobs?q={keyword.replace(' ', '+')}"
+                response = requests.get(url, headers=self.headers, timeout=10)
+
+                if response.status_code == 200:
+                    soup = BeautifulSoup(response.text, 'html.parser')
+
+                    # Parse job cards from TrueUp
+                    job_cards = soup.find_all(['div', 'article'], attrs={'data-job': True})
+                    if not job_cards:
+                        job_cards = soup.find_all(['div', 'li'], class_=lambda x: x and 'job' in str(x).lower())
+
+                    for card in job_cards[:50]:
+                        try:
+                            # Extract job info
+                            title_elem = card.find(['h2', 'h3', 'a'])
+                            title = title_elem.get_text(strip=True) if title_elem else ''
+
+                            if title and self._matches_keywords({'title': title}, keywords):
+                                company_elem = card.find(['span', 'div'], class_=lambda x: x and 'company' in str(x).lower())
+                                company = company_elem.get_text(strip=True) if company_elem else 'Unknown'
+
+                                location_elem = card.find(['span', 'div'], class_=lambda x: x and 'location' in str(x).lower())
+                                location = location_elem.get_text(strip=True) if location_elem else 'Remote'
+
+                                url_elem = card.find('a', href=True)
+                                job_url = url_elem['href'] if url_elem else ''
+                                if job_url and not job_url.startswith('http'):
+                                    job_url = f"https://www.trueup.io{job_url}"
+
+                                jobs.append({
+                                    'external_id': f"trueup_{hash(job_url)}",
+                                    'source': 'trueup',
+                                    'title': title,
+                                    'company': company,
+                                    'location': location,
+                                    'description': '',
+                                    'url': job_url,
+                                    'posted_date': datetime.utcnow(),
+                                })
+                        except Exception:
+                            continue
+
+                time.sleep(2)
+
+        except Exception as e:
+            print(f"Error fetching TrueUp jobs: {e}")
+
+        return jobs
+
+    def fetch_pave_jobs(self, keywords: List[str], locations: List[str]) -> List[Dict]:
+        """Fetch jobs from Pave."""
+        jobs = []
+
+        try:
+            # Pave is primarily a compensation data platform
+            # Check if they have a public job board
+            url = "https://www.pave.com/jobs"
+            response = requests.get(url, headers=self.headers, timeout=10)
+
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+
+                # Parse job listings if available
+                job_cards = soup.find_all(['div', 'li'], class_=lambda x: x and 'job' in str(x).lower())
+
+                for card in job_cards[:50]:
+                    try:
+                        title_elem = card.find(['h2', 'h3', 'h4', 'a'])
+                        title = title_elem.get_text(strip=True) if title_elem else ''
+
+                        if title and self._matches_keywords({'title': title}, keywords):
+                            company_elem = card.find(['span', 'div', 'p'], class_=lambda x: x and 'company' in str(x).lower())
+                            company = company_elem.get_text(strip=True) if company_elem else 'Unknown'
+
+                            location_elem = card.find(['span', 'div'], class_=lambda x: x and 'location' in str(x).lower())
+                            location = location_elem.get_text(strip=True) if location_elem else 'Remote'
+
+                            url_elem = card.find('a', href=True)
+                            job_url = url_elem['href'] if url_elem else ''
+                            if job_url and not job_url.startswith('http'):
+                                job_url = f"https://www.pave.com{job_url}"
+
+                            jobs.append({
+                                'external_id': f"pave_{hash(job_url)}",
+                                'source': 'pave',
+                                'title': title,
+                                'company': company,
+                                'location': location,
+                                'description': '',
+                                'url': job_url,
+                                'posted_date': datetime.utcnow(),
+                            })
+                    except Exception:
+                        continue
+
+            time.sleep(2)
+
+        except Exception as e:
+            print(f"Error fetching Pave jobs: {e}")
 
         return jobs
 
