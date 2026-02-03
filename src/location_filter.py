@@ -50,18 +50,19 @@ def is_midtown_manhattan(location: str) -> bool:
 
 def matches_location_preference(location: str) -> bool:
     """
-    Check if a job location matches Manhattan, Bronx, or Remote.
+    Check if a job location matches Manhattan, Bronx, or Remote (USA only).
 
     Allowed locations:
     - Manhattan (all neighborhoods)
     - Bronx
-    - Remote/WFH
+    - Remote/WFH (USA-based)
 
     NOT allowed:
     - Brooklyn
     - Queens
     - Staten Island
     - Other boroughs
+    - Canada (any city/province)
 
     Args:
         location: Job location string
@@ -74,7 +75,19 @@ def matches_location_preference(location: str) -> bool:
 
     location_lower = location.lower()
 
-    # Remote keywords (always accepted)
+    # First, exclude Canada completely
+    canadian_keywords = [
+        'canada', 'canadian', 'ontario', 'quebec', 'british columbia', 'alberta',
+        'toronto', 'montreal', 'vancouver', 'ottawa', 'calgary', 'edmonton',
+        'winnipeg', 'quebec city', 'hamilton', 'kitchener', 'london, on',
+        'victoria', 'halifax', 'oshawa', 'windsor', 'saskatoon', 'regina',
+        'sherbrooke', 'barrie', 'kelowna', 'abbotsford', 'kingston', 'guelph',
+        ', on', ', qc', ', bc', ', ab', ', mb', ', sk', ', ns', ', nb'
+    ]
+    if any(keyword in location_lower for keyword in canadian_keywords):
+        return False
+
+    # Remote keywords (always accepted if not in Canada)
     remote_keywords = ['remote', 'work from home', 'wfh', 'anywhere', 'distributed']
     if any(keyword in location_lower for keyword in remote_keywords):
         return True
