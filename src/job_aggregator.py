@@ -57,6 +57,7 @@ class JobAggregator:
             'productjobs': self.fetch_productjobs_jobs,
             'trueup': self.fetch_trueup_jobs,
             'pave': self.fetch_pave_jobs,
+            'hiringcafe': self.fetch_hiringcafe_jobs,
         }
 
         for source_name, fetch_func in sources.items():
@@ -1162,6 +1163,73 @@ class JobAggregator:
 
         except Exception as e:
             print(f"Error fetching Pave jobs: {e}")
+
+        return jobs
+
+    def fetch_hiringcafe_jobs(self, keywords: List[str], locations: List[str]) -> List[Dict]:
+        """Fetch jobs from Hiring Cafe."""
+        jobs = []
+
+        try:
+            # Hiring Cafe is a curated job board for tech roles
+            # They have a simple job board interface
+            for keyword in keywords[:2]:
+                url = f"https://hiring.cafe/search?q={keyword.replace(' ', '+')}"
+                response = requests.get(url, headers=self.headers, timeout=10)
+
+                if response.status_code == 200:
+                    soup = BeautifulSoup(response.text, 'html.parser')
+
+                    # Hiring Cafe uses structured job listings
+                    job_cards = soup.find_all(['div', 'article', 'li'], class_=lambda x: x and 'job' in str(x).lower())
+                    if not job_cards:
+                        # Try alternative selectors
+                        job_cards = soup.find_all(['div', 'article'], attrs={'data-job-id': True})
+                    if not job_cards:
+                        job_cards = soup.find_all(['a'], href=lambda x: x and '/job/' in str(x))
+
+                    for card in job_cards[:50]:
+                        try:
+                            # Extract job title
+                            title_elem = card.find(['h2', 'h3', 'h4', 'span'], class_=lambda x: x and 'title' in str(x).lower())
+                            if not title_elem:
+                                title_elem = card.find(['h2', 'h3', 'h4'])
+                            title = title_elem.get_text(strip=True) if title_elem else ''
+
+                            if title and self._matches_keywords({'title': title}, keywords):
+                                # Extract company
+                                company_elem = card.find(['span', 'div', 'p'], class_=lambda x: x and 'company' in str(x).lower())
+                                company = company_elem.get_text(strip=True) if company_elem else 'Unknown'
+
+                                # Extract location
+                                location_elem = card.find(['span', 'div', 'p'], class_=lambda x: x and 'location' in str(x).lower())
+                                location = location_elem.get_text(strip=True) if location_elem else 'Remote'
+
+                                # Extract URL
+                                url_elem = card.find('a', href=True)
+                                if not url_elem and card.name == 'a':
+                                    url_elem = card
+                                job_url = url_elem['href'] if url_elem else ''
+                                if job_url and not job_url.startswith('http'):
+                                    job_url = f"https://hiring.cafe{job_url}"
+
+                                jobs.append({
+                                    'external_id': f"hiringcafe_{hash(job_url)}",
+                                    'source': 'hiringcafe',
+                                    'title': title,
+                                    'company': company,
+                                    'location': location,
+                                    'description': '',
+                                    'url': job_url,
+                                    'posted_date': datetime.utcnow(),
+                                })
+                        except Exception:
+                            continue
+
+                time.sleep(2)
+
+        except Exception as e:
+            print(f"Error fetching Hiring Cafe jobs: {e}")
 
         return jobs
 
